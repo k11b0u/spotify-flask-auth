@@ -18,7 +18,15 @@ global_token = None
 
 @app.route("/")
 def index():
-    return "✅ Flaskアプリは動いています"
+    query = {
+        "client_id": CLIENT_ID,
+        "response_type": "code",
+        "redirect_uri": REDIRECT_URI,
+        "scope": SCOPE,
+    }
+    auth_redirect = f"{AUTH_URL}?{urllib.parse.urlencode(query)}"
+    return redirect(auth_redirect)
+
 
 
 @app.route("/callback")
