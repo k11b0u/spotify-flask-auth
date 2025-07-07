@@ -46,14 +46,14 @@ def callback():
         token_info = response.json()
         access_token = token_info["access_token"]
         return f"""
-        <h2>✅ アクセストークン取得成功！</h2>
-        <p><b>以下をコピーして使ってください：</b></p>
+        <h2>✅ アクセストークン取得成功</h2>
+        <p>以下をコピーして再生コードで使ってください：</p>
         <textarea rows="6" cols="100">{access_token}</textarea>
-        <br><br>
-        <p>（このトークンは1時間有効です）</p>
+        <p>※ 有効期限は1時間です</p>
         """
     else:
         return f"❌ トークン取得失敗: {response.status_code}<br>{response.text}"
+
 
 
 if __name__ == "__main__":
