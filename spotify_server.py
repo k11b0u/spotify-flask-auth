@@ -125,6 +125,15 @@ def play_music(emotion):
     else:
         return f"❌ 再生失敗: {response.status_code} {response.text}"
 
+@app.route("/download_tokens")
+def download_tokens():
+    try:
+        with open("tokens.json", "r") as f:
+            return f"<pre>{f.read()}</pre>"
+    except FileNotFoundError:
+        return "❌ tokens.json が見つかりません。まず認証を行ってください。"
+
+
 # ==== ローカル用起動設定 ====
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
