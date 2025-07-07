@@ -1,0 +1,4 @@
+torch
+torchaudio
+einops
+stable-audio-tools

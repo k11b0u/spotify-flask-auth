@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>リアルタイム感情モニタ</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1"></script>
+  <style>
+    body { font-family: sans-serif; margin: 20px; }
+    h1 { text-align: center; }
+    canvas { max-height: 600px; }
+  </style>
+</head>
+<body>
+  <h1>リアルタイム心拍・感情グラフ</h1>
+  <div style="overflow-x: scroll;">
+    <canvas id="chart" width="2000" height="500"></canvas>
+  </div>
+  <p style="text-align:center">
+    <b>スクロール</b>：グラフ上でドラッグ or マウスホイールで横移動<br>
+    <b>ズーム</b>：Ctrl+ホイール or ピンチ（スマホ）<br>
+    <b>リセット</b>：ダブルクリック
+  </p>
+  <script>
+    const ctx = document.getElementById('chart').getContext('2d');
+
+    const chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [
+          {
+            label: 'Heart Rate (bpm)',
+            borderColor: 'red',
+            data: [],
+            yAxisID: 'y1',
+            pointRadius: 1,
+            tension: 0.25
+          },
+          {
+            label: 'RMSSD (ms)',
+            borderColor: 'blue',
+            data: [],
+            yAxisID: 'y2',
+            pointRadius: 1,
+            tension: 0.25
+          }
+        ]
+      },
+      options: {
+        responsive: false,
+        maintainAspectRatio: false,
+        plugins: {
+          annotation: { annotations: {} },
+          zoom: {
+            pan: { enabled: true, mode: 'x' },
+            zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'x' }
+          },
+          legend: {
+            labels: { font: { size: 16 } }
+          },
+          tooltip: {
+            callbacks: {
+              afterBody: function (context) {
+                const index = context[0].dataIndex;
+                const emotion = chart.data.emotionLabels?.[index];
+                return emotion ? `感情: ${emotion}` : "";
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            title: { display: true, text: "日時" },
+            ticks: {
+              maxRotation: 60,
+              minRotation: 45,
+              autoSkip: true,
+              maxTicksLimit: 40
+            }
+          },
+          y1: {
+            type: 'linear',
+            position: 'left',
+            title: { display: true, text: 'Heart Rate' },
+            min: 40,
+            max: 140,
+            ticks: { color: "red" }
+          },
+          y2: {
+            type: 'linear',
+            position: 'right',
+            title: { display: true, text: 'RMSSD' },
+            min: 0,
+            max: 120,
+            ticks: { color: "blue" },
+            grid: { drawOnChartArea: false }
+          }
+        }
+      }
+    });
+
+    const emotionColorMap = {
+      '緊張系': 'rgba(255, 0, 0, 0.04)',
+      '鎮静系': 'rgba(0, 200, 0, 0.04)',
+      '落ち込み系': 'rgba(0, 0, 255, 0.04)',
+      '分類不能': 'rgba(128, 128, 128, 0.01)'
+    };
+
+    async function fetchData() {
+      const res = await fetch('/data');
+      const json = await res.json();
+
+      chart.data.labels = json.labels;
+      chart.data.datasets[0].data = json.heart_rate;
+      chart.data.datasets[1].data = json.rmssd;
+      chart.data.emotionLabels = json.emotion;
+
+      // 感情帯（annotation）
+      const annotations = {};
+      let current = null;
+      for (let i = 0; i < json.labels.length; i++) {
+        const label = json.labels[i];
+        const emo = json.emotion[i];
+        if (!current || current.emotion !== emo) {
+          if (current) {
+            annotations[`bg${current.start}`] = {
+              type: 'box',
+              xMin: current.start,
+              xMax: json.labels[i - 1],
+              backgroundColor: emotionColorMap[current.emotion] || 'rgba(200,200,200,0.03)',
+              yScaleID: 'y1'
+            };
+          }
+          current = { emotion: emo, start: label };
+        }
+      }
+      if (current) {
+        annotations[`bg${current.start}`] = {
+          type: 'box',
+          xMin: current.start,
+          xMax: json.labels[json.labels.length - 1],
+          backgroundColor: emotionColorMap[current.emotion] || 'rgba(200,200,200,0.03)',
+          yScaleID: 'y1'
+        };
+      }
+      chart.options.plugins.annotation.annotations = annotations;
+
+      chart.update();
+      chart.resize();
+    }
+
+    setInterval(fetchData, 3000);
+    fetchData();
+
+    // ダブルクリックでズームリセット
+    document.getElementById('chart').ondblclick = () => {
+      chart.resetZoom();
+    };
+  </script>
+</body>
+</html>
