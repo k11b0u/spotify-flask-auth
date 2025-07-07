@@ -29,7 +29,6 @@ def index():
 
 @app.route("/callback")
 def callback():
-    global global_token
     code = request.args.get("code")
 
     data = {
@@ -45,10 +44,17 @@ def callback():
 
     if response.status_code == 200:
         token_info = response.json()
-        global_token = token_info["access_token"]
-        return f"✅ アクセストークン取得成功！<br><br><code>{global_token}</code>"
+        access_token = token_info["access_token"]
+        return f"""
+        <h2>✅ アクセストークン取得成功！</h2>
+        <p><b>以下をコピーして使ってください：</b></p>
+        <textarea rows="6" cols="100">{access_token}</textarea>
+        <br><br>
+        <p>（このトークンは1時間有効です）</p>
+        """
     else:
         return f"❌ トークン取得失敗: {response.status_code}<br>{response.text}"
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)  # Render用に公開ポートを指定
