@@ -7,8 +7,7 @@ app = Flask(__name__)
 # === Spotifyアプリ情報（あなたのIDとSecretを入れてください） ===
 CLIENT_ID = "7838a0cf003644ae8b5f3f75b9eb534e"
 CLIENT_SECRET = "d2d93b5ce2b7403f91125a0ea8685697"
-REDIRECT_URI = "https://spotify-flask-app-pduk.onrender.com/callback"  # ← ここ重要
-
+REDIRECT_URI = "https://spotify-flask-auth.onrender.com/callback"
 SCOPE = "user-read-playback-state user-modify-playback-state"
 AUTH_URL = "https://accounts.spotify.com/authorize"
 TOKEN_URL = "https://accounts.spotify.com/api/token"
